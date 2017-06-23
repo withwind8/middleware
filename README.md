@@ -39,7 +39,7 @@ func main(){
   //can using standard http.Handler as middleware
   app.UseHandler(mux)
   
-  log.Fatal(http.ListenAndServe(":8080", app))
+  log.Fatal(app.Listen(":8080"))
 }  
 ```
 
@@ -62,6 +62,15 @@ type MiddlewareFunc func(w http.ResponseWriter, r *http.Request, next func())
 Using a http.Handler interface as middleware, next() will be executed automatically at the end
 ### method ```UseHandlerFunc(handlerFunc http.HandlerFunc)```
 Using a http.HandlerFunc as middleware, next() will be executed automatically at the end
+### method ```Listen(addr string) error```
+Start the server in with given address.
+```go
+app.Listen(":8080")
+```
+is Simply sugar for the following:
+```go
+http.ListenAndServe(":8080", app)
+```
 
 ## Usage
 Suppose you have 2 middleware (1 interface 1 func) and 2 handler (1 interface 1 func), and use them in the following order:

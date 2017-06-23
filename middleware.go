@@ -88,3 +88,7 @@ func (m *fakeMiddlewareForHandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.
 func (m *middlewares) UseHandlerFunc(handlerFunc http.HandlerFunc) {
 	m.Use(&fakeMiddlewareForHandlerFunc{handlerFunc})
 }
+
+func (m *middlewares) Listen(addr string) error {
+	return http.ListenAndServe(addr, m)
+}
