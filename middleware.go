@@ -27,16 +27,16 @@ func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *middlewares) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	//调用第一个
+	// execute the first middleware
 	m.head.ServeHTTP(w, r)
 }
 
-//返回中间件管理器
+// create middleware container
 func New() *middlewares {
 	return &middlewares{}
 }
 
-//使用中间件
+// use middleware
 func (m *middlewares) Use(mw Middleware) {
 	n := &middleware{mw, nil}
 	if m.head == nil && m.tail == nil {
@@ -48,47 +48,36 @@ func (m *middlewares) Use(mw Middleware) {
 	}
 }
 
-type fakeMiddleware struct {
-	middlewareFunc MiddlewareFunc
+// MiddlewareFunc implement Middleware interface
+func (f MiddlewareFunc) ServeHTTP(w http.ResponseWriter, r *http.Request, next func()) {
+	f(w, r, next)
 }
 
-func (m *fakeMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next func()) {
-	m.middlewareFunc(w, r, next)
-}
-
-//通过中间件函数使用中间件
+// use MiddlewareFunc as middleware
 func (m *middlewares) UseFunc(middlewareFunc MiddlewareFunc) {
-	m.Use(&fakeMiddleware{middlewareFunc})
+	m.Use(middlewareFunc)
 }
 
-type fakeMiddlewareForHandler struct {
+type middlewareForHandler struct {
 	handler http.Handler
 }
 
-func (m *fakeMiddlewareForHandler) ServeHTTP(w http.ResponseWriter, r *http.Request, next func()) {
+func (m *middlewareForHandler) ServeHTTP(w http.ResponseWriter, r *http.Request, next func()) {
 	m.handler.ServeHTTP(w, r)
 	next()
 }
 
-//把http.Handler当中间件使用
+// use http.Handler as middleware
 func (m *middlewares) UseHandler(handler http.Handler) {
-	m.Use(&fakeMiddlewareForHandler{handler})
+	m.Use(&middlewareForHandler{handler})
 }
 
-type fakeMiddlewareForHandlerFunc struct {
-	handlerFunc http.HandlerFunc
-}
-
-func (m *fakeMiddlewareForHandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request, next func()) {
-	m.handlerFunc(w, r)
-	next()
-}
-
-//把http.HandlerFunc当中间件使用
+// use http.HandlerFunc as middleware
 func (m *middlewares) UseHandlerFunc(handlerFunc http.HandlerFunc) {
-	m.Use(&fakeMiddlewareForHandlerFunc{handlerFunc})
+	m.Use(&middlewareForHandler{handlerFunc})
 }
 
+// just a sugar method
 func (m *middlewares) Listen(addr string) error {
 	return http.ListenAndServe(addr, m)
 }
