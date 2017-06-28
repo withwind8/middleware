@@ -27,8 +27,35 @@ func (m *middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *middlewares) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ww := &ResponseWriter{w, 200, 0}
 	// execute the first middleware
-	m.head.ServeHTTP(w, r)
+	m.head.ServeHTTP(ww, r)
+}
+
+// ResponseWriter is a wrapper around http.ResponseWriter, record status and size
+type ResponseWriter struct {
+	http.ResponseWriter
+	status int
+	size   int
+}
+
+func (w *ResponseWriter) WriteHeader(s int) {
+	w.status = s
+	w.ResponseWriter.WriteHeader(s)
+}
+
+func (w *ResponseWriter) Write(b []byte) (int, error) {
+	size, err := w.ResponseWriter.Write(b)
+	w.size += size
+	return size, err
+}
+
+func (w *ResponseWriter) Status() int {
+	return w.status
+}
+
+func (w *ResponseWriter) Size() int {
+	return w.size
 }
 
 // create middleware container
